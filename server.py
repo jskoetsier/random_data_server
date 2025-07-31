@@ -7,13 +7,96 @@ until the client disconnects.
 
 import socket
 import threading
-import os
 import sys
 import signal
+import time
+from collections import defaultdict
+from threading import Lock
+
+class MetricsCollector:
+    """Collects and manages server metrics."""
+    
+    def __init__(self):
+        self.lock = Lock()
+        self.total_connections = defaultdict(int)  # per port
+        self.active_connections = defaultdict(int)  # per port
+        self.bytes_transmitted = defaultdict(int)  # per port
+        self.connection_durations = defaultdict(list)  # per port
+        self.start_time = time.time()
+    
+    def connection_started(self, port, _client_address):
+        """Record a new connection."""
+        with self.lock:
+            self.total_connections[port] += 1
+            self.active_connections[port] += 1
+        print(f"[METRICS] Port {port}: Total connections: {self.total_connections[port]}, Active: {self.active_connections[port]}")
+    
+    def connection_ended(self, port, _client_address, duration, bytes_sent):
+        """Record a connection ending."""
+        with self.lock:
+            self.active_connections[port] -= 1
+            self.bytes_transmitted[port] += bytes_sent
+            self.connection_durations[port].append(duration)
+        
+        print(f"[METRICS] Port {port}: Connection ended - Duration: {duration:.2f}s, Bytes sent: {bytes_sent:,}")
+        print(f"[METRICS] Port {port}: Active connections: {self.active_connections[port]}, Total bytes: {self.bytes_transmitted[port]:,}")
+    
+    def bytes_sent(self, port, bytes_count):
+        """Record bytes sent (for real-time tracking)."""
+        with self.lock:
+            self.bytes_transmitted[port] += bytes_count
+    
+    def get_summary(self):
+        """Get a summary of all metrics."""
+        with self.lock:
+            uptime = time.time() - self.start_time
+            summary = {
+                'uptime_seconds': uptime,
+                'ports': {}
+            }
+            
+            for port in set(list(self.total_connections.keys()) + list(self.active_connections.keys())):
+                avg_duration = 0
+                if self.connection_durations[port]:
+                    avg_duration = sum(self.connection_durations[port]) / len(self.connection_durations[port])
+                
+                summary['ports'][port] = {
+                    'total_connections': self.total_connections[port],
+                    'active_connections': self.active_connections[port],
+                    'bytes_transmitted': self.bytes_transmitted[port],
+                    'average_connection_duration': avg_duration,
+                    'completed_connections': len(self.connection_durations[port])
+                }
+            
+            return summary
+    
+    def print_summary(self):
+        """Print a formatted summary of metrics."""
+        summary = self.get_summary()
+        print("\n" + "="*50)
+        print("SERVER METRICS SUMMARY")
+        print("="*50)
+        print(f"Uptime: {summary['uptime_seconds']:.2f} seconds")
+        
+        for port, metrics in summary['ports'].items():
+            print(f"\nPort {port}:")
+            print(f"  Total Connections: {metrics['total_connections']}")
+            print(f"  Active Connections: {metrics['active_connections']}")
+            print(f"  Completed Connections: {metrics['completed_connections']}")
+            print(f"  Bytes Transmitted: {metrics['bytes_transmitted']:,}")
+            print(f"  Average Connection Duration: {metrics['average_connection_duration']:.2f}s")
+        print("="*50 + "\n")
+
+# Global metrics collector
+metrics = MetricsCollector()
 
 def handle_client(client_socket, client_address, port):
     """Handle a client connection by sending random data until disconnection."""
+    start_time = time.time()
+    total_bytes_sent = 0
+    
     print(f"[+] Connection established from {client_address[0]}:{client_address[1]} on port {port}")
+    metrics.connection_started(port, client_address)
     
     try:
         # Open /dev/urandom for reading binary data
@@ -32,6 +115,8 @@ def handle_client(client_socket, client_address, port):
                 # If no bytes were sent, the connection is likely closed
                 if bytes_sent == 0:
                     break
+                
+                total_bytes_sent += bytes_sent
                     
     except BrokenPipeError:
         # Client disconnected
@@ -42,6 +127,12 @@ def handle_client(client_socket, client_address, port):
     except Exception as e:
         print(f"[-] Error handling client: {e}")
     finally:
+        # Calculate connection duration
+        duration = time.time() - start_time
+        
+        # Record metrics
+        metrics.connection_ended(port, client_address, duration, total_bytes_sent)
+        
         # Close the client socket
         client_socket.close()
         print(f"[+] Connection closed from {client_address[0]}:{client_address[1]}")
@@ -81,9 +172,28 @@ def start_server(port):
     
     return server
 
+def print_periodic_metrics():
+    """Print metrics summary every 60 seconds."""
+    while True:
+        time.sleep(60)  # Wait 60 seconds
+        metrics.print_summary()
+
+def signal_handler(_signum, _frame):
+    """Handle shutdown signals and print final metrics."""
+    print("\n[+] Shutting down servers...")
+    print("[+] Final metrics summary:")
+    metrics.print_summary()
+    sys.exit(0)
+
 def main():
     """Main function to start servers on ports 80 and 443."""
     print("[+] Starting random data servers on ports 80 and 443...")
+    print("[+] Metrics will be displayed every 60 seconds")
+    print("[+] Press Ctrl+C to stop the server and view final metrics")
+    
+    # Set up signal handlers
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
     
     # Start servers in separate threads
     server_80_thread = threading.Thread(target=start_server, args=(80,))
@@ -95,14 +205,18 @@ def main():
     server_80_thread.start()
     server_443_thread.start()
     
+    # Start periodic metrics reporting
+    metrics_thread = threading.Thread(target=print_periodic_metrics)
+    metrics_thread.daemon = True
+    metrics_thread.start()
+    
     # Handle keyboard interrupt gracefully
     try:
         # Keep the main thread alive
         while True:
-            signal.pause()
+            time.sleep(1)
     except KeyboardInterrupt:
-        print("\n[+] Shutting down servers...")
-        sys.exit(0)
+        signal_handler(signal.SIGINT, None)
 
 if __name__ == "__main__":
     main()
