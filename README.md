@@ -9,8 +9,11 @@ This server is designed for network testing, bandwidth testing, and load testing
 ## Features
 
 - **Multi-port Support**: Listens on both port 80 (HTTP) and 443 (HTTPS)
+- **HTTP/HTTPS Protocol Support**: Sends proper HTTP response headers before data streaming
+- **Chunked Transfer Encoding**: Uses HTTP chunked encoding for continuous data transmission
 - **Concurrent Connections**: Multi-threaded architecture supports multiple simultaneous clients
 - **Continuous Streaming**: Non-stop random data transmission until client disconnect
+- **Security Headers**: HTTPS connections include security headers (HSTS, X-Frame-Options, etc.)
 - **Metrics Collection**: Built-in connection and bandwidth metrics
 - **Docker Compose Support**: Containerized deployment with health checks and auto-restart
 - **Graceful Shutdown**: Proper signal handling for clean termination

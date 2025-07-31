@@ -91,7 +91,7 @@ class MetricsCollector:
 metrics = MetricsCollector()
 
 def handle_client(client_socket, client_address, port):
-    """Handle a client connection by sending random data until disconnection."""
+    """Handle a client connection by sending HTTP/HTTPS headers then random data until disconnection."""
     start_time = time.time()
     total_bytes_sent = 0
     
@@ -99,23 +99,90 @@ def handle_client(client_socket, client_address, port):
     metrics.connection_started(port, client_address)
     
     try:
+        # Send appropriate HTTP/HTTPS headers based on port
+        if port == 80:
+            # HTTP headers
+            http_response = (
+                "HTTP/1.1 200 OK\r\n"
+                "Server: RandomDataServer/1.2.0\r\n"
+                "Content-Type: application/octet-stream\r\n"
+                "Transfer-Encoding: chunked\r\n"
+                "Cache-Control: no-cache, no-store, must-revalidate\r\n"
+                "Pragma: no-cache\r\n"
+                "Expires: 0\r\n"
+                "Connection: keep-alive\r\n"
+                "\r\n"
+            )
+            print(f"[+] Sending HTTP headers to {client_address[0]}:{client_address[1]}")
+        elif port == 443:
+            # HTTPS-style headers (note: this is not real HTTPS encryption, just HTTP over port 443)
+            http_response = (
+                "HTTP/1.1 200 OK\r\n"
+                "Server: RandomDataServer/1.2.0\r\n"
+                "Content-Type: application/octet-stream\r\n"
+                "Transfer-Encoding: chunked\r\n"
+                "Cache-Control: no-cache, no-store, must-revalidate\r\n"
+                "Pragma: no-cache\r\n"
+                "Expires: 0\r\n"
+                "Connection: keep-alive\r\n"
+                "Strict-Transport-Security: max-age=31536000; includeSubDomains\r\n"
+                "X-Content-Type-Options: nosniff\r\n"
+                "X-Frame-Options: DENY\r\n"
+                "\r\n"
+            )
+            print(f"[+] Sending HTTPS-style headers to {client_address[0]}:{client_address[1]}")
+        else:
+            # Default HTTP headers for any other port
+            http_response = (
+                "HTTP/1.1 200 OK\r\n"
+                "Server: RandomDataServer/1.2.0\r\n"
+                "Content-Type: application/octet-stream\r\n"
+                "Transfer-Encoding: chunked\r\n"
+                "Cache-Control: no-cache, no-store, must-revalidate\r\n"
+                "Pragma: no-cache\r\n"
+                "Expires: 0\r\n"
+                "Connection: keep-alive\r\n"
+                "\r\n"
+            )
+            print(f"[+] Sending HTTP headers to {client_address[0]}:{client_address[1]} on port {port}")
+        
+        # Send the HTTP headers
+        header_bytes = client_socket.send(http_response.encode('utf-8'))
+        total_bytes_sent += header_bytes
+        
         # Open /dev/urandom for reading binary data
         with open("/dev/urandom", "rb") as random_source:
             # Create a buffer for reading random data
             buffer_size = 8192  # 8KB buffer
+            
+            print(f"[+] Starting random data stream to {client_address[0]}:{client_address[1]}")
             
             # Keep sending random data until the connection is closed
             while True:
                 # Read random data
                 random_data = random_source.read(buffer_size)
                 
-                # Send the data to the client
-                bytes_sent = client_socket.send(random_data)
+                # For HTTP chunked encoding, we need to send chunk size in hex followed by \r\n
+                chunk_size = hex(len(random_data))[2:].encode('utf-8')  # Remove '0x' prefix
+                chunk_header = chunk_size + b'\r\n'
+                chunk_footer = b'\r\n'
                 
-                # If no bytes were sent, the connection is likely closed
+                # Send chunk header
+                bytes_sent = client_socket.send(chunk_header)
                 if bytes_sent == 0:
                     break
+                total_bytes_sent += bytes_sent
                 
+                # Send the actual data
+                bytes_sent = client_socket.send(random_data)
+                if bytes_sent == 0:
+                    break
+                total_bytes_sent += bytes_sent
+                
+                # Send chunk footer
+                bytes_sent = client_socket.send(chunk_footer)
+                if bytes_sent == 0:
+                    break
                 total_bytes_sent += bytes_sent
                     
     except BrokenPipeError:

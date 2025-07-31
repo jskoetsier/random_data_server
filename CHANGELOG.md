@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - HTTP/HTTPS Headers Support
+
+### Added
+- Official HTTP response headers for port 80 connections
+- HTTPS-style response headers for port 443 connections with security headers
+- HTTP chunked transfer encoding for proper streaming protocol compliance
+- Server identification header (RandomDataServer/1.3.0)
+- Cache control headers to prevent caching of random data streams
+- Security headers for HTTPS connections (HSTS, X-Content-Type-Options, X-Frame-Options)
+
+### Enhanced
+- More realistic HTTP/HTTPS protocol simulation for testing scenarios
+- Proper chunked encoding implementation for continuous data streaming
+- Enhanced logging with header transmission notifications
+- Better compatibility with HTTP clients and testing tools
+
+### Changed
+- Data transmission now follows HTTP chunked encoding format
+- Headers are sent before random data stream begins
+- Connection handling now includes proper HTTP protocol flow
+
 ## [1.2.0] - Docker Compose Migration
 
 ### Changed
