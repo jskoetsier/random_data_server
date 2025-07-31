@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - Data Streaming Fix
+
+### Fixed
+- **Critical**: Fixed data streaming issue where server would block waiting for HTTP requests
+- Added 5-second socket timeout for HTTP request reading to prevent indefinite blocking
+- Enhanced error handling for socket timeout and request reading failures
+- Server now proceeds with data streaming even if HTTP request reading fails or times out
+
+### Enhanced
+- Improved logging for request timeout and error scenarios
+- Better fallback behavior when HTTP request parsing encounters issues
+- More robust connection handling for various client types
+
+### Technical
+- Socket timeout only applies to initial HTTP request reading, not data streaming
+- Graceful degradation when clients don't send complete HTTP requests
+- Enhanced exception handling for network-related errors
+
 ## [1.3.0] - HTTP/HTTPS Headers Support
 
 ### Added

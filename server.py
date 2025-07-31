@@ -134,7 +134,7 @@ def handle_client(client_socket, client_address, port):
             # HTTP headers
             http_response = (
                 "HTTP/1.1 200 OK\r\n"
-                "Server: RandomDataServer/1.3.0\r\n"
+                "Server: RandomDataServer/1.3.1\r\n"
                 "Content-Type: application/octet-stream\r\n"
                 "Transfer-Encoding: chunked\r\n"
                 "Cache-Control: no-cache, no-store, must-revalidate\r\n"
@@ -148,7 +148,7 @@ def handle_client(client_socket, client_address, port):
             # HTTPS-style headers (note: this is not real HTTPS encryption, just HTTP over port 443)
             http_response = (
                 "HTTP/1.1 200 OK\r\n"
-                "Server: RandomDataServer/1.3.0\r\n"
+                "Server: RandomDataServer/1.3.1\r\n"
                 "Content-Type: application/octet-stream\r\n"
                 "Transfer-Encoding: chunked\r\n"
                 "Cache-Control: no-cache, no-store, must-revalidate\r\n"
@@ -165,7 +165,7 @@ def handle_client(client_socket, client_address, port):
             # Default HTTP headers for any other port
             http_response = (
                 "HTTP/1.1 200 OK\r\n"
-                "Server: RandomDataServer/1.3.0\r\n"
+                "Server: RandomDataServer/1.3.1\r\n"
                 "Content-Type: application/octet-stream\r\n"
                 "Transfer-Encoding: chunked\r\n"
                 "Cache-Control: no-cache, no-store, must-revalidate\r\n"
