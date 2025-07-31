@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - Docker Compose Migration
+
+### Changed
+- **BREAKING**: Replaced native Python startup with Docker Compose deployment
+- Updated startup script (start.sh) to use Docker Compose instead of direct Python execution
+- Modified installation script to validate Docker and Docker Compose instead of Python
+- Completely rewritten README.md to focus on Docker Compose deployment
+
+### Added
+- docker-compose.yml with health checks and auto-restart functionality
+- Isolated bridge network for container communication
+- Automatic container restart policy (unless-stopped)
+- Health check monitoring every 30 seconds
+- PYTHONUNBUFFERED environment variable for real-time logging
+
+### Removed
+- Native Python startup option (now Docker Compose only)
+- Root privilege requirements on host system
+- Python version validation in installation script
+- Direct Docker run commands in favor of Docker Compose
+
+### Enhanced
+- No root privileges required on host (handled by Docker)
+- Better container lifecycle management
+- Improved deployment reliability with health checks
+- Simplified management with docker-compose commands
+
 ## [1.1.0] - Enhanced Features and Documentation
 
 ### Added

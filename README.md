@@ -12,31 +12,45 @@ This server is designed for network testing, bandwidth testing, and load testing
 - **Concurrent Connections**: Multi-threaded architecture supports multiple simultaneous clients
 - **Continuous Streaming**: Non-stop random data transmission until client disconnect
 - **Metrics Collection**: Built-in connection and bandwidth metrics
-- **Docker Support**: Containerized deployment ready
+- **Docker Compose Support**: Containerized deployment with health checks and auto-restart
 - **Graceful Shutdown**: Proper signal handling for clean termination
 
 ## Quick Start
 
-### Local Development
+### Docker Compose Deployment (Recommended)
 
 ```bash
-# Run directly with Python
-python3 server.py
+# Install and validate environment
+./install.sh
+
+# Start the server
+./start.sh
 ```
 
-**Note**: Binding to ports 80 and 443 requires root privileges:
+### Manual Docker Compose
+
 ```bash
-sudo python3 server.py
+# Start with Docker Compose
+docker compose up --build
+
+# Or with legacy docker-compose
+docker-compose up --build
 ```
 
-### Docker Deployment
+### Management Commands
 
 ```bash
-# Build the image
-docker build -t random-data-server .
+# Stop the server
+docker compose down
 
-# Run the container
-docker run -p 80:80 -p 443:443 random-data-server
+# View logs
+docker compose logs -f
+
+# Check status
+docker compose ps
+
+# Restart service
+docker compose restart
 ```
 
 ## Usage
@@ -73,12 +87,22 @@ Default configuration:
 - **Buffer Size**: 8KB
 - **Max Connections**: 5 queued per port
 - **Bind Address**: 0.0.0.0 (all interfaces)
+- **Health Check**: Every 30 seconds
+- **Restart Policy**: Unless stopped
 
 ## Requirements
 
-- Python 3.7+
-- Unix/Linux system (uses `/dev/urandom`)
-- Root privileges for ports 80/443
+- Docker and Docker Compose
+- Unix/Linux/macOS system (Windows supported via Docker)
+- No root privileges required (handled by Docker)
+
+## Docker Compose Features
+
+- **Health Checks**: Automatic service health monitoring
+- **Auto Restart**: Container restarts on failure
+- **Isolated Network**: Dedicated bridge network
+- **Environment Variables**: PYTHONUNBUFFERED for real-time logs
+- **Graceful Shutdown**: Proper container cleanup
 
 ## Security Considerations
 
@@ -87,6 +111,7 @@ This server is intended for testing purposes. For production use, consider:
 - Adding rate limiting
 - Using non-privileged ports
 - Restricting bind addresses
+- Network segmentation
 
 ## License
 
