@@ -7,15 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - Enhanced Features and Documentation
+
 ### Added
+- MIT License for open-source distribution
+- Comprehensive installation script (install.sh) with environment validation
+- Startup script (start.sh) with automatic privilege handling
+- Docker startup script (start-docker.sh) for containerized deployment
 - Metrics collection system for connection tracking and bandwidth monitoring
-- VERSION file for semantic versioning
-- Comprehensive README documentation
+- Comprehensive README documentation with usage examples
 - CHANGELOG for tracking project changes
+- VERSION file for semantic versioning
 
 ### Changed
-- Enhanced logging with metrics information
+- Enhanced logging with metrics information and periodic reporting
 - Improved error handling and connection management
+- All scripts made executable automatically
+- Added graceful shutdown with final metrics summary
+
+### Enhanced
+- Server now displays metrics every 60 seconds
+- Real-time connection tracking and bandwidth monitoring
+- Automatic Docker detection and setup in installation script
 
 ## [1.0.0] - Initial Release
 
