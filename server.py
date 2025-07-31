@@ -99,12 +99,29 @@ def handle_client(client_socket, client_address, port):
     metrics.connection_started(port, client_address)
     
     try:
+        # First, read the HTTP request from the client
+        request_data = b""
+        while b"\r\n\r\n" not in request_data:
+            chunk = client_socket.recv(1024)
+            if not chunk:
+                break
+            request_data += chunk
+            # Prevent infinite reading
+            if len(request_data) > 8192:
+                break
+        
+        # Parse the request line to get method, path, and HTTP version
+        request_lines = request_data.decode('utf-8', errors='ignore').split('\r\n')
+        if request_lines:
+            request_line = request_lines[0]
+            print(f"[+] Received request: {request_line} from {client_address[0]}:{client_address[1]}")
+        
         # Send appropriate HTTP/HTTPS headers based on port
         if port == 80:
             # HTTP headers
             http_response = (
                 "HTTP/1.1 200 OK\r\n"
-                "Server: RandomDataServer/1.2.0\r\n"
+                "Server: RandomDataServer/1.3.0\r\n"
                 "Content-Type: application/octet-stream\r\n"
                 "Transfer-Encoding: chunked\r\n"
                 "Cache-Control: no-cache, no-store, must-revalidate\r\n"
@@ -118,7 +135,7 @@ def handle_client(client_socket, client_address, port):
             # HTTPS-style headers (note: this is not real HTTPS encryption, just HTTP over port 443)
             http_response = (
                 "HTTP/1.1 200 OK\r\n"
-                "Server: RandomDataServer/1.2.0\r\n"
+                "Server: RandomDataServer/1.3.0\r\n"
                 "Content-Type: application/octet-stream\r\n"
                 "Transfer-Encoding: chunked\r\n"
                 "Cache-Control: no-cache, no-store, must-revalidate\r\n"
@@ -135,7 +152,7 @@ def handle_client(client_socket, client_address, port):
             # Default HTTP headers for any other port
             http_response = (
                 "HTTP/1.1 200 OK\r\n"
-                "Server: RandomDataServer/1.2.0\r\n"
+                "Server: RandomDataServer/1.3.0\r\n"
                 "Content-Type: application/octet-stream\r\n"
                 "Transfer-Encoding: chunked\r\n"
                 "Cache-Control: no-cache, no-store, must-revalidate\r\n"
