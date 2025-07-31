@@ -99,22 +99,35 @@ def handle_client(client_socket, client_address, port):
     metrics.connection_started(port, client_address)
     
     try:
-        # First, read the HTTP request from the client
-        request_data = b""
-        while b"\r\n\r\n" not in request_data:
-            chunk = client_socket.recv(1024)
-            if not chunk:
-                break
-            request_data += chunk
-            # Prevent infinite reading
-            if len(request_data) > 8192:
-                break
+        # Set socket timeout for reading HTTP request
+        client_socket.settimeout(5.0)  # 5 second timeout
         
-        # Parse the request line to get method, path, and HTTP version
-        request_lines = request_data.decode('utf-8', errors='ignore').split('\r\n')
-        if request_lines:
-            request_line = request_lines[0]
-            print(f"[+] Received request: {request_line} from {client_address[0]}:{client_address[1]}")
+        # Try to read the HTTP request from the client
+        request_data = b""
+        try:
+            while b"\r\n\r\n" not in request_data:
+                chunk = client_socket.recv(1024)
+                if not chunk:
+                    break
+                request_data += chunk
+                # Prevent infinite reading
+                if len(request_data) > 8192:
+                    break
+            
+            # Parse the request line to get method, path, and HTTP version
+            request_lines = request_data.decode('utf-8', errors='ignore').split('\r\n')
+            if request_lines and request_lines[0]:
+                request_line = request_lines[0]
+                print(f"[+] Received request: {request_line} from {client_address[0]}:{client_address[1]}")
+            else:
+                print(f"[+] No HTTP request received from {client_address[0]}:{client_address[1]}, proceeding with data stream")
+        except socket.timeout:
+            print(f"[+] Request timeout from {client_address[0]}:{client_address[1]}, proceeding with data stream")
+        except Exception as e:
+            print(f"[+] Error reading request from {client_address[0]}:{client_address[1]}: {e}, proceeding with data stream")
+        
+        # Remove timeout for data streaming
+        client_socket.settimeout(None)
         
         # Send appropriate HTTP/HTTPS headers based on port
         if port == 80:
